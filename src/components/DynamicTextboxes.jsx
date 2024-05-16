@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import axios from 'axios';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./DynamicTextboxes.css";
@@ -8,21 +9,17 @@ const DynamicTextboxes = () => {
   const [inputs, setInputs] = useState([]);
   const [total, setTotal] = useState(0);
 
-  // Fetch data from the database when the component mounts
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/api/get-data");
-        const data = await response.json();
-        setInputs(data.inputs);
-        setNumTextboxes(data.inputs.length);
-        calculateTotal(data.inputs);
-      } catch (error) {
-        console.error("Error fetching data", error);
-      }
-    };
-    fetchData();
-  }, []);
+  const fetchData = async () => {
+    try {
+      const response = await axios.get("http://localhost:8000/api/get-data/");
+      const data = response.data;
+      setInputs(data.positions);
+      setNumTextboxes(data.positions.length);
+      calculateTotal(data.positions);
+    } catch (error) {
+      console.error("Error fetching data", error);
+    }
+  };
 
   const handleNumTextboxesChange = (e) => {
     setNumTextboxes(Number(e.target.value));
@@ -61,14 +58,11 @@ const DynamicTextboxes = () => {
 
   const saveTotal = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/save-total", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ inputs, total }),
+      const response = await axios.post("http://127.0.0.1:8000/api/save-total/", {
+        positions: inputs,
+        total: total
       });
-      if (response.ok) {
+      if (response.status === 201) {
         toast.success("Total saved successfully!");
       } else {
         toast.error("Failed to save total");
